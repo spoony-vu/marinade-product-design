@@ -4,8 +4,26 @@ A Claude Code skill for building internal tools and dashboards with Marinade Fin
 
 ## Install
 
+**Option 1** — One-line install via [skills CLI](https://github.com/vercel-labs/skills):
+
 ```bash
 npx skills add spoony-vu/marinade-product-design
+```
+
+**Option 2** — Download the skill file directly:
+
+[**Download SKILL.md**](https://raw.githubusercontent.com/spoony-vu/marinade-product-design/main/SKILL.md)
+
+Then place it in your skills directory:
+
+```bash
+# Global (all projects)
+mkdir -p ~/.claude/skills/marinade-product-design
+mv SKILL.md ~/.claude/skills/marinade-product-design/
+
+# Project-only
+mkdir -p .claude/skills/marinade-product-design
+mv SKILL.md .claude/skills/marinade-product-design/
 ```
 
 ## What it covers
