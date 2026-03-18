@@ -28,13 +28,13 @@ mv SKILL.md .claude/skills/marinade-product-design/
 
 ## What it covers
 
+- **Gotchas** — 14 common failure patterns (wrong easing, hardcoded colors, SVG dot distortion, etc.) checked before every ship
 - **Design tokens** — Full light/dark color system with CSS variables and Tailwind config, including semantic tokens, alpha variants, chart palette, tag palette, and sidebar tokens
 - **Typography** — Geist (sans) + Geist Mono (data), tabular-nums enforcement, anti-aliased rendering, iOS zoom prevention
-- **Component conventions** — Shadcn UI primitives, `cn()` utility, Lucide React icons, composition patterns
 - **Charts & data viz** — Recharts with custom tooltips, crosshair, active dots, series dimming, time-range selectors, and proper number formatting (SOL, USD, %, addresses)
 - **Animation & motion** — Duration tokens, easing curves, decision flowcharts, `prefers-reduced-motion` enforcement, paired element rules
 - **Interactivity** — Touch-first with hover enhancement, 44px tap targets, button press feel, warm tooltips, keyboard/focus management
-- **Visual polish** — Anti-slop checklist, hairline borders, shadow-for-border patterns, z-index scale, mask-over-gradient fades
+- **Visual language** — Hairline borders, shadow-for-border patterns, z-index scale, mask-over-gradient fades
 - **Auto-fix audit** — Automatically detects and fixes 40+ common issues across color, typography, layout, animation, accessibility, charts, and Marinade-specific formatting
 
 ## Stack
