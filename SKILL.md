@@ -1,6 +1,6 @@
 ---
 name: marinade-product-design
-description: Build internal tools and dashboards for Marinade Finance. Uses React + TypeScript, Shadcn UI, Tailwind CSS, Lucide React icons, and Geist typeface. Follows Marinade's visual language with teal accents, clean card surfaces, and a strict design token system with full light/dark mode support (light default). Enforces component conventions, typography rules, and layout patterns specific to Marinade's products.
+description: Build Marinade Finance dashboards, internal tools, and product UI. Use when building with Marinade's design system, implementing teal-accent themed interfaces, creating Solana/DeFi dashboards, adding charts with Recharts, styling Shadcn components for Marinade, formatting SOL/USD/address data, or scaffolding new Marinade tools. Covers design tokens (light/dark), Geist typography, chart interactivity, animation timing, accessibility, and auto-fix audit patterns.
 ---
 
 You are helping build an internal tool/dashboard for Marinade Finance.
@@ -11,14 +11,34 @@ You are helping build an internal tool/dashboard for Marinade Finance.
 - React + TypeScript
 - Shadcn UI (https://ui.shadcn.com) as the base component library
 - Tailwind CSS for utility styling
-- Lucide React for all icons
+- Lucide React for all icons (16px inline, 20px standalone)
 - Geist as the primary typeface (import via `next/font/google` or CDN)
+- Recharts for all charts
+
+### Gotchas — Common Mistakes to Avoid
+
+These are the top failure patterns. Check every one before shipping:
+
+1. **`dark:` Tailwind modifiers for colors** — Never. All color switching happens through CSS variables only.
+2. **Hardcoded hex/rgb colors** — Always use token CSS variables (`var(--primary)`, etc.), never raw hex values.
+3. **Default Recharts tooltip** — Always use a custom `<CustomTooltip />` styled with Marinade tokens.
+4. **Active dot inside `preserveAspectRatio="none"` SVG** — Distorts circles into ellipses. Render dots as HTML `<div>` outside the SVG.
+5. **`primary` (teal) for tab/range selectors** — Use `secondary` (grey). Teal competes with chart colors.
+6. **Serif or non-Geist fonts** — Always Geist (sans) or Geist Mono (data). Sans-serif fallback stack only.
+7. **Dynamic numbers without `tabular-nums`** — Causes layout shift on counters, prices, APY, TVL. Always set `font-variant-numeric: tabular-nums`.
+8. **`transition: all`** — Specify exact properties (`transition: opacity 150ms ease-out, transform 150ms ease-out`).
+9. **Missing `prefers-reduced-motion`** — Every animation needs a `prefers-reduced-motion: reduce` fallback. Mandatory.
+10. **`ease-in` on entering elements** — Use `ease-out` for elements appearing, `ease-in-out` for movement. Never `ease-in` or `linear` for UI.
+11. **Static chart tooltips/crosshairs** — Must be hidden by default, shown only on hover. Never render statically.
+12. **Hover effects without `@media (hover: hover)` guard** — Hover is progressive enhancement, not baseline.
+13. **Full Solana addresses** — Always truncate: `AB1c...Xz9f` (4 prefix + 4 suffix).
+14. **`border` for subtle dividers** — Use `box-shadow: 0 0 0 1px rgba(0,0,0,0.08)` or `border-grid` token instead.
 
 ### Color Tokens — THE SOURCE OF TRUTH
 
 The full token definitions are embedded below as JSON. When scaffolding a project, generate CSS variables + Tailwind config from these tokens.
 
-**Every color in the system has a light and dark variant.** Dark mode is the default. Light mode must also work. Use CSS custom properties that switch based on a `.dark` / `.light` class on `<html>` or via `prefers-color-scheme`.
+**Every color in the system has a light and dark variant.** Light mode is the default. Use CSS custom properties that switch based on a `.dark` class on `<html>` or via `prefers-color-scheme`.
 
 #### tokens.json (embedded)
 
@@ -81,8 +101,6 @@ The full token definitions are embedded below as JSON. When scaffolding a projec
     "sans":  "Geist",
     "mono":  "Geist Mono"
   },
-  "breakpoints": { "sm": 640, "md": 768, "lg": 1024, "xl": 1280, "2xl": 1536 },
-  "containers": { "3xs": 256, "2xs": 288, "xs": 320, "sm": 384, "md": 448, "lg": 512, "xl": 576, "2xl": 672, "3xl": 768, "4xl": 896, "5xl": 1024 },
   "shadow": { "offset-x": 0, "offset-y": 2, "blur-radius": 10, "spread-radius": 0, "color": "#0000000D" }
 }
 ```
@@ -225,32 +243,24 @@ colors: {
 ```
 
 ### Fonts
-- **Sans:** Geist — the default for all UI text, labels, headings, body copy
-- **Mono:** Geist Mono — for data, code, addresses, numbers
-- **Never use serif fonts** in dashboards, tools, or product UI. Always default to Geist (sans) or Geist Mono. Ensure the CSS font-family fallback stack is sans-serif only (`ui-sans-serif, system-ui, -apple-system, sans-serif`).
-
-### Component Conventions
-- All components live in `/components/ui` (Shadcn pattern)
-- Custom Marinade components extend Shadcn primitives — never replace them
-- Use `cn()` utility for conditional class merging
-- Prefer composition over prop-drilling
+- **Sans:** Geist — all UI text, labels, headings, body copy
+- **Mono:** Geist Mono — data, code, addresses, numbers
+- **Never use serif fonts.** Fallback stack: `ui-sans-serif, system-ui, -apple-system, sans-serif`
 
 ### Typography
-- Use `font-variant-numeric: tabular-nums` for any dynamic numbers (timers, counters, prices, TVL, APY)
-- Anti-aliased font smoothing (`-webkit-font-smoothing: antialiased`)
+- `font-variant-numeric: tabular-nums` on all dynamic numbers (timers, counters, prices, TVL, APY)
+- `-webkit-font-smoothing: antialiased` on body/root
 - `text-wrap: balance` on headings
 
-### Icons
-- Lucide React only. Import individually: `import { Wallet } from "lucide-react"`
-- Size default: 16px inline, 20px standalone UI elements
-
 ### Visual Language
-- Dark backgrounds, glassy card surfaces with subtle borders
 - Teal primary accent — always use the `primary` token, never hardcode
 - Rounded corners: `rounded-lg` (8px) for cards, `rounded-md` (6px) for buttons, `rounded-sm` (4px) for inputs
-- Subtle shadows (`0 2px 10px rgba(0,0,0,0.05)`) and backdrop-blur on overlays
+- Subtle shadows and backdrop-blur on overlays
 - Eased gradients over linear ones
-- Hairline borders: use `border-grid` token or `ring-1 ring-white/10` patterns
+- Hairline borders: `border-grid` token or `box-shadow: 0 0 0 1px rgba(0,0,0,0.08)`
+- `pointer-events: none` on decorative elements, `user-select: none` on decorative art
+- Prefer `mask-image` over gradients for fades (but not on scrollable lists)
+- Z-index scale: `--z-dropdown: 100; --z-modal: 200; --z-tooltip: 300; --z-toast: 400`. Prefer `isolation: isolate` when possible.
 
 ### Dark / Light Mode
 - Light mode is the **default**
@@ -259,7 +269,7 @@ colors: {
 - Never use Tailwind `dark:` modifier for colors — all color switching happens through CSS variables
 - Test both modes before shipping
 
-### Animation & Motion (from /emil-design-engineering)
+### Animation & Motion
 
 #### Decision: Should I Animate This?
 ```
@@ -279,7 +289,7 @@ Is the element entering or exiting?
     └── Is it a hover/color change? → ease
 ```
 
-#### Easing Tokens (use these, not generic `ease-out`)
+#### Easing Tokens
 ```css
 --ease-out-quint: cubic-bezier(0.23, 1, 0.32, 1);     /* Strong ease-out for modals, drawers */
 --ease-out-cubic: cubic-bezier(0.215, 0.61, 0.355, 1); /* Standard ease-out for tooltips, dropdowns */
@@ -295,16 +305,13 @@ Is the element entering or exiting?
 | Page transitions | 300-400ms max |
 
 #### Rules
-- Only animate `transform` and `opacity` — never `height`, `width`, `padding`, `margin` (triggers layout)
+- Only animate `transform` and `opacity` — never `height`, `width`, `padding`, `margin`
 - **Paired elements rule**: Elements that animate together (modal + overlay, tooltip + arrow) must share the same easing and duration
 - Exit animations can be faster than entrances
 - Avoid `blur` filters above 20px (expensive, especially Safari)
-- `will-change: transform` for janky animations — remove when not animating
-- Never use `transition: all` — specify explicit properties
-- Avoid `ease-in` and `linear` for UI elements (feels sluggish/robotic)
+- `will-change: transform` only when needed — remove when not animating
 
 #### Reduced Motion — MANDATORY
-Every animation needs a `prefers-reduced-motion` fallback:
 ```css
 @media (prefers-reduced-motion: reduce) {
   .animated { animation: none; transition: none; }
@@ -314,95 +321,50 @@ Every animation needs a `prefers-reduced-motion` fallback:
 #### Theme Transitions
 Switching dark/light mode must NOT trigger transitions on elements. Disable transitions during theme changes.
 
-### Interactivity Patterns (from /emil-design-engineering)
+### Interactivity Patterns
 
 #### Touch-First, Hover-Enhanced
 - Design for touch first, add hover as progressive enhancement
-- **Never rely on hover for core functionality** — hover enhances, not enables
-- Disable hover effects on touch devices:
+- **Never rely on hover for core functionality**
+- Guard all hover effects:
 ```css
 @media (hover: hover) and (pointer: fine) {
   .element:hover { background: var(--accent); }
 }
 ```
-- Set `touch-action: manipulation` on buttons/links to prevent double-tap zoom
+- `touch-action: manipulation` on buttons/links to prevent double-tap zoom
 
 #### Tap Targets
 - **44px minimum** on all interactive elements
-- Small icon buttons: use `::before` pseudo-element to expand hit area:
-```css
-.icon-button { position: relative; width: 24px; height: 24px; }
-.icon-button::before { content: ''; position: absolute; inset: -10px; }
-```
+- Small icon buttons: expand hit area with `::before { content: ''; position: absolute; inset: -10px; }`
 
 #### Button Press Feel
-Add `transform: scale(0.97)` on `:active` for tactile feedback:
-```css
-.button:active { transform: scale(0.97); }
-```
+- `transform: scale(0.97)` on `:active` for tactile feedback
 
 #### No Layout Shift
-- Use `font-variant-numeric: tabular-nums` for all changing numbers
+- `tabular-nums` on all changing numbers
 - Never change font weight on hover/selected states
-- Use hardcoded dimensions for skeleton loaders and image placeholders
+- Hardcoded dimensions for skeleton loaders and image placeholders
 
 #### Tooltips
-- **Delay before showing**: 200ms to prevent accidental activation
-- **Sequential ("warm") tooltips**: Once one tooltip is open, subsequent tooltips open instantly with no delay/animation. Track warm state and clear after 300ms of no tooltip being open.
-- Tooltip content must not rely on hover for functionality — it's supplementary only
+- **200ms delay** before showing to prevent accidental activation
+- **Sequential ("warm") tooltips**: Once one tooltip is open, subsequent ones open instantly. Clear warm state after 300ms of no tooltip.
+- Tooltip content is supplementary only — never required for functionality
 
 #### Focus & Keyboard
-- Tab order must be consistent — only tab through visible elements
-- `scrollIntoView({ behavior: 'smooth', block: 'nearest' })` when keyboard navigation scrolls
-- Focus moves to modal content on open, returns to trigger on close
+- Tab through visible elements only
+- `scrollIntoView({ behavior: 'smooth', block: 'nearest' })` on keyboard navigation
+- Focus moves to modal on open, returns to trigger on close
 - Icon buttons always need `aria-label`
-- Focus outlines: grey, black, or white only — never colored outlines
+- Focus outlines: grey, black, or white only — never colored
 
 #### Forms & Inputs
 - Wrap inputs with `<form>` for Enter-to-submit
-- Support `Cmd+Enter` / `Ctrl+Enter` for textarea submission
+- `Cmd+Enter` / `Ctrl+Enter` for textarea submission
 - Input font size: **16px minimum** (prevents iOS auto-zoom)
 - Label clicks must focus the associated input
-- Disable button after submission to prevent duplicate requests
+- Disable button after submission to prevent duplicates
 - Colocate errors near the field that caused them
-
-### Visual Polish (from /frontend-design + /emil-design-engineering)
-
-#### Anti-Slop Checklist
-Every Marinade UI must avoid generic AI aesthetics. Before shipping, verify:
-- No default/generic font choices (the system uses Geist — enforce it)
-- No arbitrary colors outside the token system
-- No cookie-cutter card layouts with identical padding everywhere
-- Every visual choice (color, spacing, radius, shadow) must be intentional for the context
-
-#### Shadows for Borders
-Use `box-shadow` instead of `border` for subtle dividers — blends better with varying backgrounds:
-```css
-box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
-```
-
-#### Hairline Borders
-```css
-:root { --border-hairline: 1px; }
-@media (min-resolution: 192dpi) { :root { --border-hairline: 0.5px; } }
-```
-
-#### Decorative Elements
-- `pointer-events: none` on all decorative/background elements
-- `user-select: none` on code illustrations and decorative art
-
-#### Mask Over Gradient
-Prefer `mask-image` over gradients for fades — works better with varying content:
-```css
-.fade-bottom { mask-image: linear-gradient(to bottom, black 80%, transparent); }
-```
-Do NOT apply fades on scrollable lists — it restricts viewable area.
-
-#### Z-Index Scale
-```css
-:root { --z-dropdown: 100; --z-modal: 200; --z-tooltip: 300; --z-toast: 400; }
-```
-Prefer `isolation: isolate` over z-index when possible.
 
 ### Data Display Patterns
 - Use Geist Mono for all numerical data (balances, APY, TVL, addresses)
@@ -411,18 +373,14 @@ Prefer `isolation: isolate` over z-index when possible.
 - SOL values: 2-4 decimal places depending on context
 - USD values: always 2 decimal places with `$` prefix
 - Percentage values: 2 decimal places with `%` suffix
-- Use green/red semantic colors for positive/negative changes
+- Use `primary` token for positive changes, `destructive` for negative
 
 ### Charts & Data Visualization
 
-#### Library
-- Use **Recharts** (`recharts`) for all charts — it's React-native, composable, and works with Shadcn patterns
-- Wrap charts in a reusable `<ChartContainer>` component that handles responsive sizing and theme tokens
-
 #### Chart Styling Rules
-- **Always** use the `chart-1` through `chart-5` CSS variables for series colors — never hardcode
-- Background: transparent or `var(--card)` — charts sit on card surfaces
-- Grid lines: use `var(--border-grid)` (very subtle)
+- **Always** use `chart-1` through `chart-5` CSS variables for series colors — never hardcode
+- Background: transparent or `var(--card)`
+- Grid lines: `var(--border-grid)` (very subtle)
 - Axis labels: `var(--muted-foreground)`, Geist Mono, 11-12px
 - Axis ticks: `var(--border-grid)` or hidden
 - No chart borders — let the card handle containment
@@ -431,15 +389,15 @@ Prefer `isolation: isolate` over z-index when possible.
 
 All chart interactive elements (tooltip, crosshair, active dot) must be **hidden by default** and only appear on hover. Never show them statically.
 
-- **Tooltips**: Hidden by default (`opacity: 0`). On `mousemove` over the chart area, show with `opacity: 1` and `transition: opacity 150ms ease-out`. On `mouseleave`, hide again. Style: `var(--popover)` background, `var(--popover-foreground)` text, `var(--border)` border, `rounded-lg`, `shadow-lg`, `pointer-events: none`. Use Geist Mono for values. Position tooltip to follow the cursor X, clamped to chart bounds so it never overflows.
-- **Crosshair line**: Hidden by default (`display: none`). On hover, show a vertical dashed line at the nearest data point X. Use `var(--border)` stroke, `strokeDasharray="4 4"`, spanning full chart height.
-- **Active dot**: Hidden by default (`display: none`). On hover, show at the nearest data point. Style: `var(--background)` fill, 2.5px border in series color, radius 5px. Snaps to nearest data point — never free-floats between points. **CRITICAL: Never place the dot inside an SVG that uses `preserveAspectRatio="none"` — this distorts circles into ellipses.** Always render the dot as an absolutely-positioned HTML `<div>` with `border-radius: 50%` outside the SVG, converting SVG coordinates to pixel coordinates via `(svgX / viewBoxWidth) * containerWidth` and `(svgY / viewBoxHeight) * containerHeight`. Use `transform: translate(-50%, -50%)` to center it on the data point.
-- **Hover on series**: When multiple series exist, dim non-hovered series to 30% opacity. Active series stays at full opacity. Transition: `opacity 150ms ease-out`.
-- **Cursor**: Set `cursor: crosshair` on the chart container.
-- **Legend**: Clickable to toggle series visibility. Use `var(--muted-foreground)` for labels, chart color dots (8px circles). On click, toggle the series and update the legend item opacity.
-- **Brush/zoom**: For time-series > 30 data points, add a brush selector at the bottom using `var(--secondary)` for the handle.
+- **Tooltips**: Hidden by default. On hover, show with `transition: opacity 150ms ease-out`. Style: `var(--popover)` bg, `var(--popover-foreground)` text, `var(--border)` border, `rounded-lg`, `shadow-lg`, `pointer-events: none`. Geist Mono for values. Clamp position to chart bounds.
+- **Crosshair line**: Vertical dashed line at nearest data point X. `var(--border)` stroke, `strokeDasharray="4 4"`, full chart height.
+- **Active dot**: `var(--background)` fill, 2.5px border in series color, radius 5px. Snaps to nearest data point. **CRITICAL: Never place inside `preserveAspectRatio="none"` SVG** — render as HTML `<div>` with `border-radius: 50%` outside the SVG, converting SVG coords to pixels.
+- **Hover on series**: Dim non-hovered series to 30% opacity. `opacity 150ms ease-out`.
+- **Cursor**: `cursor: crosshair` on chart container.
+- **Legend**: Clickable to toggle series. `var(--muted-foreground)` labels, 8px chart-color dots.
+- **Brush/zoom**: For time-series > 30 data points, use `var(--secondary)` handle.
 
-**Implementation with Recharts:**
+#### Recharts Implementation
 ```tsx
 <Tooltip
   content={<CustomTooltip />}  // Never use default Recharts tooltip
@@ -448,14 +406,14 @@ All chart interactive elements (tooltip, crosshair, active dot) must be **hidden
 />
 <Area
   activeDot={{ r: 5, fill: 'var(--background)', stroke: 'var(--chart-1)', strokeWidth: 2.5 }}
-  dot={false}  // No dots on the line itself — only active dot on hover
+  dot={false}  // Only active dot on hover
 />
 ```
 
 **CustomTooltip must:**
 - Use `var(--popover)` bg, `var(--border)` border, `rounded-lg`, `shadow-lg`
 - Show date in muted-foreground, value in Geist Mono bold, change % in primary/destructive
-- Never render when not active (`if (!active || !payload) return null`)
+- Return `null` when not active (`if (!active || !payload) return null`)
 
 #### Chart Types & When to Use
 | Type | Use For | Notes |
@@ -464,100 +422,86 @@ All chart interactive elements (tooltip, crosshair, active dot) must be **hidden
 | Line chart | APY history, price trends | 2px stroke, smooth curve (`type="monotone"`) |
 | Bar chart | Validator comparison, distribution | `rounded-t-sm` on bars, 4px gap between |
 | Stacked bar | Composition breakdown | Use chart-1 through chart-5 in order |
-| Pie/donut | Portfolio allocation, vote share | Donut preferred (60% inner radius), no more than 5 slices |
+| Pie/donut | Portfolio allocation, vote share | Donut preferred (60% inner radius), max 5 slices |
 | Sparkline | Inline mini-charts in tables | 40px tall, no axes, single color, `strokeWidth={1.5}` |
 
 #### Time-Series Conventions
-- X-axis: Show 5-7 date labels max, use relative format ("Mar 1", "Mar 8") for < 3 months, month format ("Jan", "Feb") for > 3 months
-- Y-axis: Auto-scale with 20% padding above max value. Use compact notation for large numbers (1.2M, 450K)
-- Default range selector: 7d / 30d / 90d / 1y / All — styled as tab pills. **Selected**: `background: var(--secondary)`, `color: var(--foreground)` (grey fill with readable text). **Unselected**: `background: transparent`, `color: var(--muted-foreground)` (no background, just muted text). Never use `primary` (green) for tab selection — tabs use neutral grey to avoid competing with chart colors.
-- Loading state: Skeleton shimmer using `var(--muted)` with a subtle pulse animation
+- X-axis: 5-7 date labels max. Relative format ("Mar 1") for < 3 months, month format ("Jan") for > 3 months
+- Y-axis: Auto-scale with 20% padding above max. Compact notation (1.2M, 450K)
+- Range selector: 7d / 30d / 90d / 1y / All as tab pills. **Selected**: `bg-secondary text-foreground`. **Unselected**: `bg-transparent text-muted-foreground`. Never use `primary` (teal) for tab selection.
+- Loading: Skeleton shimmer with `var(--muted)` pulse
 
 #### Formatting in Charts
-- SOL values in tooltips: `1,234.56 SOL` (Geist Mono)
-- USD values: `$1,234.56`
+- SOL: `1,234.56 SOL` (Geist Mono)
+- USD: `$1,234.56`
 - Percentages: `7.12%`
-- Epoch numbers: `#567` (mono, with hash prefix)
-
-### Breakpoints
-| Name | Width |
-|------|-------|
-| sm | 640px |
-| md | 768px |
-| lg | 1024px |
-| xl | 1280px |
-| 2xl | 1536px |
+- Epoch: `#567` (mono, hash prefix)
 
 ## UI Quality Audit (Auto-Fix Mode)
 
-When building or reviewing any Marinade UI, automatically check for and fix these issues without being asked. Integrates quality standards from **/frontend-design** (anti-slop aesthetics, bold design) and **/emil-design-engineering** (interactivity, polish, accessibility).
+When building or reviewing any Marinade UI, automatically check for and fix these issues without being asked.
 
-### Color & Theme Issues — Auto-Fix
+### Color & Theme — Auto-Fix
 - Hardcoded hex/rgb values → Replace with CSS variable tokens
 - Missing dark mode support → Wire through CSS variables
-- Low contrast text on backgrounds → Swap to correct foreground token
-- Inconsistent opacity values → Use token alpha variants (primary-20, etc.)
-- `dark:` Tailwind modifiers for colors → Remove, use CSS variable switching
+- Low contrast text → Swap to correct foreground token
+- Inconsistent opacity → Use token alpha variants (primary-20, etc.)
+- `dark:` Tailwind modifiers → Remove, use CSS variable switching
 
-### Typography Issues — Auto-Fix
+### Typography — Auto-Fix
 - Non-Geist fonts → Replace with Geist (sans) or Geist Mono (data)
-- Dynamic numbers without `tabular-nums` → Add `font-variant-numeric: tabular-nums`
+- Dynamic numbers without `tabular-nums` → Add it
 - Missing `-webkit-font-smoothing: antialiased` → Add to body/root
 - Headings without `text-wrap: balance` → Add it
 - Font weight change on hover → Remove (causes layout shift)
-- Inputs under 16px → Set minimum 16px to prevent iOS auto-zoom
+- Inputs under 16px → Set 16px minimum
 
-### Layout & Spacing Issues — Auto-Fix
-- Inconsistent border-radius → Apply token scale (lg/md/sm)
-- `z-index: 9999` or arbitrary z values → Use a fixed scale or `isolation: isolate`
-- `border` property for subtle dividers → Switch to `border-grid` token or box-shadow
+### Layout & Spacing — Auto-Fix
+- Inconsistent border-radius → Apply scale (lg/md/sm)
+- Arbitrary z-index values → Use fixed scale or `isolation: isolate`
+- `border` for subtle dividers → Switch to `border-grid` token or box-shadow
 - Missing `isolation: isolate` on stacking contexts → Add it
-- Inconsistent card padding → Standardize to 24px (or 16px for compact)
+- Inconsistent card padding → Standardize to 24px (16px for compact)
 
-### Animation Issues — Auto-Fix
+### Animation — Auto-Fix
 - `transition: all` → Specify explicit properties
 - Animations > 300ms for standard UI → Reduce to token timing
 - Missing `prefers-reduced-motion` → Add media query fallback
-- Animating `width`, `height`, `padding`, `margin` → Refactor to `transform`/`opacity`
-- `ease-in` on UI elements → Switch to `ease-out` (entering) or `ease-in-out` (moving)
+- Animating layout properties → Refactor to `transform`/`opacity`
+- `ease-in` on UI elements → Switch to `ease-out` or `ease-in-out`
 
-### Interactivity Issues — Auto-Fix (from /emil-design-engineering)
-- Hover effects without `@media (hover: hover)` guard → Add media query
-- Buttons without `:active` scale feedback → Add `transform: scale(0.97)`
-- Tooltips without delay → Add 200ms delay, implement warm state for sequential
-- `transition: all` → Specify exact properties
-- Font weight change on hover/selected → Remove (use color change instead)
-- Paired elements with different easing/duration → Synchronize
-- Animations on frequently-used actions → Remove or drastically reduce
+### Interactivity — Auto-Fix
+- Hover effects without `@media (hover: hover)` → Add guard
+- Buttons without `:active` scale → Add `transform: scale(0.97)`
+- Tooltips without delay → Add 200ms delay + warm state
+- Paired elements with different timing → Synchronize
+- Animations on frequent actions → Remove or reduce
 - Missing `touch-action: manipulation` on buttons → Add it
-- Inputs < 16px font size → Increase to prevent iOS zoom
 - Forms without Enter-to-submit → Wrap in `<form>`
 
-### Accessibility Issues — Auto-Fix
-- Touch targets < 44px → Increase with padding or `::before` pseudo-element
-- Icon buttons without `aria-label` → Add descriptive label
+### Accessibility — Auto-Fix
+- Touch targets < 44px → Expand with padding or `::before`
+- Icon buttons without `aria-label` → Add label
 - Missing focus-visible styles → Add using `ring` token
-- Color-only status indicators → Add icon or text supplement
-- Missing hover states on interactive elements → Add subtle background shift with `@media (hover: hover)` guard
-- Keyboard navigation doesn't scroll → Add `scrollIntoView` on focus
-- Focus doesn't move to modal on open → Add focus management
+- Color-only indicators → Add icon or text supplement
+- Missing hover states → Add with `@media (hover: hover)` guard
+- Focus doesn't move to modal → Add focus management
 - Colored focus outlines → Change to grey/black/white
 
-### Chart Issues — Auto-Fix
-- Charts without tooltips → Add custom styled tooltip
-- Static charts that should be interactive → Add hover/click handlers
-- Hardcoded chart colors → Replace with chart-1 through chart-5 tokens
+### Charts — Auto-Fix
+- No tooltips → Add custom styled tooltip
+- Static interactive elements → Add hover handlers
+- Hardcoded chart colors → Use chart-1 through chart-5
 - Missing loading states → Add skeleton shimmer
-- Unformatted axis labels → Apply Geist Mono + compact number formatting
-- Legend not clickable → Make series toggleable
+- Unformatted axes → Apply Geist Mono + compact formatting
 
-### Marinade-Specific Issues — Auto-Fix
-- Solana addresses shown in full → Truncate to `XXXX...XXXX` (4+4)
-- Unformatted SOL amounts → Add locale grouping + 2-4 decimals
-- Missing `$` on USD values → Add prefix with 2 decimal places
-- Percentage without `%` suffix → Add it
-- Positive changes not colored green → Apply `primary` token
-- Negative changes not colored red → Apply `destructive` token
+### Marinade-Specific — Auto-Fix
+- Full Solana addresses → Truncate to `XXXX...XXXX` (4+4)
+- Unformatted SOL amounts → Locale grouping + 2-4 decimals
+- Missing `$` on USD → Add prefix + 2 decimals
+- Missing `%` suffix → Add it
+- Positive changes not green → Apply `primary`
+- Negative changes not red → Apply `destructive`
 
 ## Starting a New Tool
 
@@ -573,15 +517,6 @@ Then scaffold the project with:
 - Navigation (sidebar or top, based on answer)
 - Placeholder home dashboard with stat cards and an empty state
 - 3 starter components relevant to the tool's purpose
-- Token-based Tailwind config wired to CSS variables (from `tokens.json`)
+- Token-based Tailwind config wired to CSS variables (from tokens.json above)
 - `cn()` utility and base Shadcn setup
 - Theme provider with dark/light mode toggle
-
-## Code Quality
-
-- Never introduce unused imports or dead code
-- All components must be typed — no `any`
-- Extract repeated patterns into shared components after 2+ uses
-- Keep files under 200 lines — split into composition when larger
-- Use React Server Components where possible (Next.js App Router)
-- Client components must have `"use client"` directive
